@@ -15,6 +15,7 @@ const (
 
 type Server struct {
 	server *http.Server
+	mux    *http.ServeMux
 	muxes  map[Route]*http.ServeMux
 }
 
@@ -28,6 +29,7 @@ type Route struct {
 func NewServer() *Server {
 	return &Server{
 		nil,
+		http.NewServeMux(),
 		make(map[Route]*http.ServeMux),
 	}
 }
@@ -35,7 +37,7 @@ func NewServer() *Server {
 func (s *Server) Start(port int) error {
 	s.server = &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: s.getHandler(),
+		Handler: s.mux,
 	}
 	return s.server.ListenAndServe()
 }
@@ -48,18 +50,11 @@ func (s *Server) Stop() error {
 }
 
 func (s *Server) ServeRoute(route Route, handler RouteHandler) {
-	mux := http.NewServeMux()
-	mux.Handle(string(route.Method)+" "+route.Path, http.HandlerFunc(handler))
-
-	s.muxes[route] = mux
+	s.mux.HandleFunc(string(route.Method)+" "+route.Path, handler)
 }
 
 func (s *Server) ServeDir(dirPath string, rootUri string) {
-	mux := http.NewServeMux()
-	handler := http.FileServer(http.Dir(dirPath))
-	mux.Handle(rootUri, handler)
-
-	s.muxes[Route{GET, rootUri}] = mux
+	s.mux.Handle("GET "+rootUri, http.FileServer(http.Dir(dirPath)))
 }
 
 func (s *Server) getHandler() http.Handler {

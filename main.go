@@ -1,22 +1,20 @@
 package main
 
 import (
-	"net/http"
+	"log"
+	tasksRoute "tasks/routes"
+	"tasks/tasks"
 )
 
 func main() {
-	// s := tasks.NewServer()
-	// log.Println("Starting server on :8082")
+	s := tasks.NewServer()
+	log.Println("Starting server on :8082")
 
-	// s.ServeDir("./public", "/")
-	// s.ServeRoute(tasks.Route{Method: tasks.GET, Path: "/tasks"}, tasksRoute.Test)
+	s.ServeDir("./public", "/")
+	s.ServeRoute(tasks.Route{Method: tasks.GET, Path: "/tasks/"}, tasksRoute.Test)
 
-	// err := s.Start(8082)
-
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	http.Handle("GET /", http.FileServer(http.Dir("./public")))
-	http.ListenAndServe(":8082", nil)
+	err := s.Start(8082)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
